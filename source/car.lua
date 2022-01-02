@@ -52,6 +52,8 @@ function moveCar(car)
 	car.nextrow, car.nextcol = nil, nil
 	
 print("car moved to " .. car.row, car.col)
+print("~~~~~~~~~~~~~~~~~~~")
+	cf.sleep(1)
 end
 
 local function getNextCell(car)
@@ -61,6 +63,9 @@ local function getNextCell(car)
 	-- get the three best cells
 	local neighbourcells = {}	-- there are eight cells around the car. Get the cost for each.
 	
+	
+track.print(TRACKS[CURRENT_TRACK])
+
 	for row = car.row -1, car.row + 1 do
 		neighbourcells[row] = {}
 		for col = car.col -1, car.col +1 do
@@ -72,8 +77,7 @@ local function getNextCell(car)
 				neighbourcells[row][col] = nil
 			else
 				neighbourcells[row][col] = nil
-print("Calling Dij with row/col" .. row, col)
-				neighbourcells[row][col] = cf.getDijkstraDistance(TRACKS[CURRENT_TRACK], row, col, TRACKSDATA[CURRENT_TRACK].stoprow, TRACKSDATA[CURRENT_TRACK].stopcol)
+				neighbourcells[row][col] = cf.Findpath(TRACKS[CURRENT_TRACK], row, col, TRACKSDATA[CURRENT_TRACK].stoprow, TRACKSDATA[CURRENT_TRACK].stopcol)
 			end
 		end
 	end
@@ -125,9 +129,9 @@ print("Calling Dij with row/col" .. row, col)
 		end
 	end
 	
-	print(minrow1,mincol1,minvalue1)
-	print(minrow2,mincol2,minvalue2)
-	print(minrow3,mincol3,minvalue3)
+	-- print(minrow1,mincol1,minvalue1)
+	-- print(minrow2,mincol2,minvalue2)
+	-- print(minrow3,mincol3,minvalue3)
 	
 	car.nextrow = minrow1
 	car.nextcol = mincol1
@@ -146,16 +150,18 @@ end
 
 function car.update()
 
-	for k, thiscar in pairs(CARS) do
-		if thiscar.nextrow == nil or thiscar.nextcol == nil then
-			-- determine next destination
-			getNextCell(thiscar)
+	if love.keyboard.isDown('n') then
+		for k, thiscar in pairs(CARS) do
+			if thiscar.nextrow == nil or thiscar.nextcol == nil then
+				-- determine next destination
+				getNextCell(thiscar)
+			end
+			assert(thiscar.nextrow ~= nil and thiscar.nextcol ~= nil)
+		
+			moveCar(thiscar)
+		
+		
 		end
-		assert(thiscar.nextrow ~= nil and thiscar.nextcol ~= nil)
-	
-		moveCar(thiscar)
-	
-	
 	end
 
 

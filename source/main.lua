@@ -5,8 +5,8 @@ track = require 'track'
 cf = require 'commonfunctions'
 inspect = require 'inspect'
 fun = require 'functions'
-runDijsktra = require 'lib.dijkstra'
-grid = require 'lib.grid'
+enum = require 'enum'
+Grid = require ("lib.jumper.grid") -- The grid class
 
 CURRENT_TRACK = 1
 CELLSIZE = 40		-- width/height
@@ -29,10 +29,7 @@ function love.load()
 	track.print(TRACKS[CURRENT_TRACK])
 	
 	car.create(CURRENT_TRACK)
-	
-	
-	-- cf.getDijkstraDistance(TRACKS[CURRENT_TRACK], CARS[1].row, CARS[1].col, TRACKSDATA[CURRENT_TRACK].stoprow, TRACKSDATA[CURRENT_TRACK].stopcol)
-	
+
 end
 
 function love.draw()

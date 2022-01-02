@@ -168,44 +168,42 @@ local function GetCollisionMap(objMap)
 	return colmap
 end
 
-function Findpath(m, starttilerow,starttilecol,stoptilerow, stoptilecol )
-	-- receives x/y tile start and stop and returns an array of paths
+function Findpath(mymap, starttilerow, starttilecol, stoptilerow, stoptilecol)
+	-- receives row/col tile start and stop and returns an array of paths
 	-- returns col/row format (x,y) and not row/col!!
-
-	mymap = GetCollisionMap(m)
-
--- print(inspect(mymap[1]))	
--- print(inspect(mymap[2]))	
-
+	-- ** this has been hacked to return LENGTH
+	-- ** uses enum.tileWalkable
+	-- ** uses lib.jumper.pathfinder
+	-- ** uses Grid = require ("lib.jumper.grid") -- The grid class
+	
+	
+-- print("Searching " .. starttilerow, starttilecol, stoptilerow, stoptilecol)	
 	-- Value for walkable tiles
-	local walkable = enum.tileInitialised		-- see below - actually looking for < 10
+	local walkable = enum.tileWalkable		-- see below
 
 	-- Library setup
-	local Pathfinder = require ("jumper.pathfinder") -- The pathfinder class
+	local Pathfinder = require ("lib.jumper.pathfinder") -- The pathfinder class
 
 	-- Creates a grid object
 	local grid = Grid(mymap) 
 	-- Creates a pathfinder object using Jump Point Search
 	local myFinder = Pathfinder(grid, 'JPS', walkable) 
-	--local myFinder = Pathfinder(grid, 'JPS', (function(value) return value == 1 end)) 
 
 	-- Calculates the path, and its length
-	local path, length = myFinder:getPath(starttilerow, starttilecol, stoptilerow, stoptilecol)
-	-- path.x and path.y
-
-	--[[
-	if path then
-	  print(('Path found! Length: %.2f'):format(length))
+	local path, length = myFinder:getPath(starttilerow, starttilecol, stoptilerow, stoptilecol, false)
+	
+	if path then    
+		local str = "Path found from " .. starttilerow .. ", " .. starttilecol .. "! "
+		print((str .. 'Length: %.2f'):format(length))
 		for node, count in path:iter() do
 			print(('Step: %d - x: %d - y: %d'):format(count, node.x, node.y))
-	  
 		end
 	else
 		print("No path found.")
 	end	
-	]]--
 
-	return path
+	-- return path
+	return length
 
 end
 
@@ -265,6 +263,7 @@ local function printDistanceMap(grid)
 end
 
 function getDijkstraDistance(map, startrow, startcol, stoprow, stopcol)
+	-- ** only half works. Suspect some map rotation flippy thing is happening
 	-- use dijkstra searching 
 	-- has dependencies
 	-- runDijsktra = require 'lib.dijkstra'
@@ -295,6 +294,11 @@ function getDijkstraDistance(map, startrow, startcol, stoprow, stopcol)
 
 end
 
+local clock = os.clock
+function sleep(n)  -- seconds
+  local t0 = clock()
+  while clock() - t0 <= n do end
+end
 
 
 

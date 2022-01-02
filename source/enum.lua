@@ -1,0 +1,9 @@
+return {
+
+
+tileWalkable = 1
+
+
+
+
+}
