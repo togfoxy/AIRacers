@@ -73,7 +73,7 @@ function track.fetchTrack(tracknumber)
 		}	
 		TRACKSDATA[tracknumber] = {}
 		TRACKSDATA[tracknumber].startrow = 2
-		TRACKSDATA[tracknumber].startcol = 5
+		TRACKSDATA[tracknumber].startcol = 2
 		TRACKSDATA[tracknumber].stoprow = 9
 		TRACKSDATA[tracknumber].stopcol = 9
 		TRACKSDATA[tracknumber].initialfacing = 6	-- uses numpad directions

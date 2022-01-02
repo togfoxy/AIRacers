@@ -110,29 +110,32 @@ end
 -- maximumCost should be omitted, thus will fallback to infinity.
  function handler.findPath(start, goal, maximumCost)
   local path = {{x = start.x, y = start.y}} -- add the start node to the path
-  local previous, oldPrevious = start
+  local previous, oldPrevious = start, nil
   
-  local actualCost = 0
-  maximumCost = maximumCost or math.huge
-  
-  -- Let us backtrack the path by moving downhill the distance map.
-  repeat  
-  oldPrevious = previous
-  previous = previous.previous
-  -- we calculate the cost of move of a single step
-  local costOfMove = (oldPrevious.distance - previous.distance)
-  -- in case we cannot afford it, we stop and return an incomplete path
-  if actualCost + costOfMove > maximumCost then
-    break
-  else
-    -- otherwise, we increase the actual cost, and register the step in the path
-    actualCost = actualCost + costOfMove
-    table.insert(path,{x = previous.x, y = previous.y})
-  end
-  until previous == goal  -- stop backtracking when we have reached the goal.
-    
-  -- we return the path, plus the total cost.
-  return path, actualCost
+	local actualCost = 0
+	maximumCost = maximumCost or math.huge
+
+	-- Let us backtrack the path by moving downhill the distance map.
+	repeat  
+		oldPrevious = previous
+		previous = previous.previous
+
+
+		-- we calculate the cost of move of a single step
+		-- ** if this line errors then the grid is probably reversed/flipped!
+		local costOfMove = (oldPrevious.distance - previous.distance)
+		-- in case we cannot afford it, we stop and return an incomplete path
+		if actualCost + costOfMove > maximumCost then
+			break
+		else
+			-- otherwise, we increase the actual cost, and register the step in the path
+			actualCost = actualCost + costOfMove
+			table.insert(path,{x = previous.x, y = previous.y})
+		end
+	until previous == goal  -- stop backtracking when we have reached the goal.
+
+	-- we return the path, plus the total cost.
+	return path, actualCost
 end
 
 return handler

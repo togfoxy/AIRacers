@@ -10,8 +10,8 @@ function car.create(tracknumber)
 	mycar.speed = 0
 	mycar.maxspeed = 0
 	mycar.acel	= 0
-	mycar.nextx = nil
-	mycar.nexty = nil
+	mycar.nextrow = nil
+	mycar.nextcol = nil
 	mycar.rcolour = love.math.random(0,255)
 	mycar.gcolour = love.math.random(0,255)
 	mycar.bcolour = love.math.random(0,255)
@@ -44,11 +44,14 @@ function car.draw()
 
 end
 
-function car.move()
+function moveCar(car)
 
-
-
-
+	car.row = car.nextrow
+	car.col = car.nextcol
+	
+	car.nextrow, car.nextcol = nil, nil
+	
+print("car moved to " .. car.row, car.col)
 end
 
 local function getNextCell(car)
@@ -69,13 +72,8 @@ local function getNextCell(car)
 				neighbourcells[row][col] = nil
 			else
 				neighbourcells[row][col] = nil
-				
-print(row, col, TRACKSDATA[CURRENT_TRACK].stoprow, TRACKSDATA[CURRENT_TRACK].stopcol)
-
+print("Calling Dij with row/col" .. row, col)
 				neighbourcells[row][col] = cf.getDijkstraDistance(TRACKS[CURRENT_TRACK], row, col, TRACKSDATA[CURRENT_TRACK].stoprow, TRACKSDATA[CURRENT_TRACK].stopcol)
-				
-
-
 			end
 		end
 	end
@@ -86,7 +84,6 @@ print(row, col, TRACKSDATA[CURRENT_TRACK].stoprow, TRACKSDATA[CURRENT_TRACK].sto
 	local minrow3, mincol3, minvalue3 = nil, nil, math.huge
 	for row = car.row -1, car.row + 1 do
 		for col = car.col -1, car.col +1 do	
-print("chekcing " .. row, col)
 			if neighbourcells[row][col] ~= nil then
 
 				if neighbourcells[row][col] < minvalue1 then
@@ -128,13 +125,12 @@ print("chekcing " .. row, col)
 		end
 	end
 	
+	print(minrow1,mincol1,minvalue1)
+	print(minrow2,mincol2,minvalue2)
+	print(minrow3,mincol3,minvalue3)
 	
-	
-	
-	
-	-- print(minrow1,mincol1,minvalue1)
-	-- print(minrow2,mincol2,minvalue2)
-	-- print(minrow3,mincol3,minvalue3)
+	car.nextrow = minrow1
+	car.nextcol = mincol1
 	
 end
 
@@ -151,12 +147,13 @@ end
 function car.update()
 
 	for k, thiscar in pairs(CARS) do
-		if thiscar.nextx == nil or thiscar.nexty == nil then
+		if thiscar.nextrow == nil or thiscar.nextcol == nil then
 			-- determine next destination
 			getNextCell(thiscar)
 		end
-		assert(thiscar.nextx ~= nil)
+		assert(thiscar.nextrow ~= nil and thiscar.nextcol ~= nil)
 	
+		moveCar(thiscar)
 	
 	
 	end

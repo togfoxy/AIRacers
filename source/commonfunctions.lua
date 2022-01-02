@@ -250,7 +250,6 @@ function fromImageToQuads(spritesheet, spritewidth, spriteheight)
   return quadtiles
 end
 
-
 local function printDistanceMap(grid)
 	-- used by getDijkstraDistance only
 	-- A custom function that print the actual state of the
@@ -282,14 +281,14 @@ function getDijkstraDistance(map, startrow, startcol, stoprow, stopcol)
 	-- Our target is node(2,2). We pass it to dijsktra 
 	-- algorithm so that it will calculate all shortest paths from this 
 	-- target to every other cell.
-	local target = grid.getNode(stoprow,stopcol)
+	local target = grid.getNode(stopcol,stoprow)		-- the libary actually swaps row/col/x/y.  Annoying!!
 	runDijsktra(grid, target)
 	
 	-- ** for debugging only **
-	printDistanceMap(grid)
+	-- printDistanceMap(grid)
 	
 	--  Let us read the full path from node(9,9) => node(2,2)
-	local start = grid.getNode(startrow, startcol)
+	local start = grid.getNode(startcol, stoprow)
 	local p, cost = grid.findPath(start,target)
 	
 	return cost
