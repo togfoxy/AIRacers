@@ -3,14 +3,14 @@ module(...,package.seeall)
 function round(num, idp)
 	--Input: number to round; decimal places required
 	return tonumber(string.format("%." .. (idp or 0) .. "f", num))
-end	
+end
 
 function deepcopy(orig, copies)
 	-- copies one array to another array
 	-- ** important **
 	-- copies parameter is not meant to be passed in. Just send in orig as a single parameter
 	-- returns a new array/table
-	
+
     copies = copies or {}
     local orig_type = type(orig)
     local copy
@@ -54,9 +54,9 @@ function GetDistance(x1, y1, x2, y2)
 	-- this is real distance in pixels
 	-- receives two coordinate pairs (not vectors)
 	-- returns a single number
-	
+
 	if (x1 == nil) or (y1 == nil) or (x2 == nil) or (y2 == nil) then return 0 end
-	
+
     local horizontal_distance = x1 - x2
     local vertical_distance = y1 - y2
     --Both of these work
@@ -105,7 +105,7 @@ function DeDupeArray(myarray)
 			seen[item] = true
 		end
 	end
-	
+
 end
 
 function fltAbsoluteTileDistance(x1,y1,x2,y2)
@@ -122,10 +122,10 @@ function strFormatThousand(v)
 
 	local pos = string.len(s) % 3
 	if pos == 0 then pos = 3 end
-	
+
 	-- special case for negative numbers
 	if v < 0 then sign = "-" end
-	
+
     return sign .. string.sub(s, 1, pos) .. string.gsub(string.sub(s, pos+1), "(...)", ",%1")
 end
 
@@ -144,11 +144,11 @@ local function GetCollisionMap(objMap)
 			colmap[rows][cols] = {}
 			colmap[rows][cols] = objMap[rows][cols].tiletype
 		end
-	end	
-	
+	end
+
 -- print(inspect(colmap[2]))
-	
-	
+
+
 	-- -- after colmap is established, tweak individual tiles that occupy a player
 	-- for i = 1 , #parray do
         -- if parray[i].health > 0 then
@@ -159,7 +159,7 @@ local function GetCollisionMap(objMap)
             -- else
                 -- -- the tile the player is moving too is obstructed
                 -- row = parray[i].row
-                -- col = parray[i].col			
+                -- col = parray[i].col
             -- end
               -- colmap[row][col] = enum.tilePlayer
 		-- end
@@ -175,9 +175,7 @@ function Findpath(mymap, starttilerow, starttilecol, stoptilerow, stoptilecol)
 	-- ** uses enum.tileWalkable
 	-- ** uses lib.jumper.pathfinder
 	-- ** uses Grid = require ("lib.jumper.grid") -- The grid class
-	
-	
--- print("Searching " .. starttilerow, starttilecol, stoptilerow, stoptilecol)	
+
 	-- Value for walkable tiles
 	local walkable = enum.tileWalkable		-- see below
 
@@ -185,22 +183,25 @@ function Findpath(mymap, starttilerow, starttilecol, stoptilerow, stoptilecol)
 	local Pathfinder = require ("lib.jumper.pathfinder") -- The pathfinder class
 
 	-- Creates a grid object
-	local grid = Grid(mymap) 
+	local grid = Grid(mymap)
 	-- Creates a pathfinder object using Jump Point Search
-	local myFinder = Pathfinder(grid, 'JPS', walkable) 
+	local myFinder = Pathfinder(grid, 'JPS', walkable)
 
 	-- Calculates the path, and its length
-	local path, length = myFinder:getPath(starttilerow, starttilecol, stoptilerow, stoptilecol, false)
-	
-	if path then    
-		local str = "Path found from " .. starttilerow .. ", " .. starttilecol .. "! "
-		print((str .. 'Length: %.2f'):format(length))
-		for node, count in path:iter() do
-			print(('Step: %d - x: %d - y: %d'):format(count, node.x, node.y))
-		end
-	else
-		print("No path found.")
-	end	
+	-- jumper uses x and y
+	-- so need to switch row/col
+	local path, length = myFinder:getPath(starttilecol, starttilerow, stoptilecol, stoptilerow, false)
+
+	-- if path then
+	-- 	local str = "Path found from row/col " .. starttilerow .. ", " .. starttilecol .. "! "
+	-- 	-- local str = "Path found from " .. starttilecol .. ", " .. starttilerow .. "! "
+	-- 	print((str .. 'Length: %.2f'):format(length))
+	-- 	for node, count in path:iter() do
+	-- 		print(('Step: %d - x: %d - y: %d'):format(count, node.x, node.y))
+	-- 	end
+	-- else
+	-- 	print("No path found.")
+	-- end
 
 	-- return path
 	return length
@@ -264,32 +265,32 @@ end
 
 function getDijkstraDistance(map, startrow, startcol, stoprow, stopcol)
 	-- ** only half works. Suspect some map rotation flippy thing is happening
-	-- use dijkstra searching 
+	-- use dijkstra searching
 	-- has dependencies
 	-- runDijsktra = require 'lib.dijkstra'
 	-- grid = require 'lib.grid'
 	-- ** grid uses node.lua ** so put that file in lib as well
 	-- ** doesn't return the path. Adjust the code to do so
 	-- ** disallows diagonal. Should make that a parameter
-	
+
 	grid.create(map)  -- We create the grid map
 	grid.passable = function(value) return value ~= 5 end -- values ~= 5 are passable
 	grid.diagonal = false  -- diagonal moves are disallowed (this is the default behavior)
 	grid.distance = grid.calculateManhattanDistance  -- We will use manhattan heuristic
-	
-	-- Our target is node(2,2). We pass it to dijsktra 
-	-- algorithm so that it will calculate all shortest paths from this 
+
+	-- Our target is node(2,2). We pass it to dijsktra
+	-- algorithm so that it will calculate all shortest paths from this
 	-- target to every other cell.
 	local target = grid.getNode(stopcol,stoprow)		-- the libary actually swaps row/col/x/y.  Annoying!!
 	runDijsktra(grid, target)
-	
+
 	-- ** for debugging only **
 	-- printDistanceMap(grid)
-	
+
 	--  Let us read the full path from node(9,9) => node(2,2)
 	local start = grid.getNode(startcol, stoprow)
 	local p, cost = grid.findPath(start,target)
-	
+
 	return cost
 
 end
@@ -299,6 +300,3 @@ function sleep(n)  -- seconds
   local t0 = clock()
   while clock() - t0 <= n do end
 end
-
-
-
