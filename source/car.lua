@@ -72,7 +72,8 @@ local function getNeighbourCells(car, mytrack)
 			if  mytrack[row] == nil then
 				mytrack[row] = {}
 				neighbourcells[row][col] = nil
-			elseif mytrack[row][col] == 5 then
+			end
+			if mytrack[row][col] == 5 then
 				-- cell = wall. Do nothing
 				neighbourcells[row][col] = 999
 			elseif row == car.row and col == car.col then
@@ -80,47 +81,19 @@ local function getNeighbourCells(car, mytrack)
 				neighbourcells[row][col] = 999
 			else
 				neighbourcells[row][col] = nil
-				neighbourcells[row][col] = cf.Findpath(mytrack, row, col, TRACKSDATA[CURRENT_TRACK].stoprow, TRACKSDATA[CURRENT_TRACK].stopcol)
+				neighbourcells[row][col] = cf.round(cf.Findpath(mytrack, row, col, TRACKSDATA[CURRENT_TRACK].stoprow, TRACKSDATA[CURRENT_TRACK].stopcol),3)
 			end
 		end
 	end
+	assert(neighbourcells[car.row][car.col] == 999)
 end
 
 local function getNextCell(car)
 	-- determines which row/col the car will move to
 
-	local rndexplore = love.math.random(1,100)
 
-	if rndexplore <= car.explorerate then
-		-- explore
-		-- set the neighbour cells based on the real track
-		getNeighbourCells(car, TRACKS[CURRENT_TRACK])
-	else
-		-- exploit what is known
-		-- set the neighbour cells based on what it knows
-		for row = car.row -1, car.row + 1 do
-			neighbourcells[row] = {}
-			for col = car.col -1, car.col +1 do
-				if row == car.row and col == car.col then
-					-- this is the same cell as the car. Do nothing
-					neighbourcells[row][col] = 999
-				else
-					neighbourcells[row][col] = 999
-					if  car.track[CURRENT_TRACK][row] == nil then
-						-- unknown to the car - but still an option
-						car.track[CURRENT_TRACK][row] = {}
-						neighbourcells[row][col] = 500
-					elseif car.track[CURRENT_TRACK][row][col] ~= nil then
-						-- cell is known to car. Capture it's distance
-						neighbourcells[row][col] = car.track[CURRENT_TRACK][row][col]
-					else
-						-- not sure what would cause this
-						neighbourcells[row][col] = 999		-- an impossibly high number
-					end
-				end
-			end
-		end
-	end
+	-- peek at the real track table and get the three most legitimate tiles
+	getNeighbourCells(car, TRACKS[CURRENT_TRACK])		-- populates the neighbourcells table
 
 	-- out of all the neighbouring cells, get the three lowest distances
 	local minrow1, mincol1, minvalue1 = nil, nil, math.huge
@@ -141,7 +114,7 @@ local function getNextCell(car)
 					-- move min1 into min2
 					minvalue2 = minvalue1
 					minrow2 = minrow1
-					mincol2 = minrow1
+					mincol2 = mincol1
 
 					-- now capture the lowest value
 					minvalue1 = neighbourcells[row][col]
@@ -166,14 +139,19 @@ local function getNextCell(car)
 				end
 			end
 		end
+
 	end
 
-	print(minrow1,mincol1,minvalue1)
-	print(minrow2,mincol2,minvalue2)
-	print(minrow3,mincol3,minvalue3)
+	-- print("++++")
+	-- print("three real cells")
+	-- print(minrow1,mincol1,minvalue1)
+	-- print(minrow2,mincol2,minvalue2)
+	-- print(minrow3,mincol3,minvalue3)
 
+	local rndexplore = love.math.random(1,100)		-- check if exploring or exploiting
 	if rndexplore <= car.explorerate then
 		-- explore
+	print("Exploring")
 		local rndnum = love.math.random(1,3)
 		if rndnum == 1 then
 			car.nextrow = minrow1
@@ -185,21 +163,51 @@ local function getNextCell(car)
 			car.nextrow = minrow3
 			car.nextcol = mincol3
 		end
-
 	else
-		-- exploit
-		car.nextrow = minrow1
-		car.nextcol = mincol1
+	-- if exploiting then peek at it's track memory to see what it knows, if any, then choose the best of those
+	print("Exploiting what it knows")
+		if car.track[CURRENT_TRACK][minrow1] == nil then
+			car.track[CURRENT_TRACK][minrow1] = {}
+		end
+
+		if car.track[CURRENT_TRACK][minrow1][mincol1] ~= nil then
+			car.nextrow = minrow1
+			car.nextcol = mincol1
+		elseif car.track[CURRENT_TRACK][minrow2][mincol2] ~= nil then
+			car.nextrow = minrow2
+			car.nextcol = mincol2
+		elseif car.track[CURRENT_TRACK][minrow3][mincol3] ~= nil then
+			car.nextrow = minrow3
+			car.nextcol = mincol3
+		else
+			-- all values are nil. It knows nothing. Go random
+			local rndnum = love.math.random(1,3)
+			if rndnum == 1 then
+				car.nextrow = minrow1
+				car.nextcol = mincol1
+			elseif rndnum == 2 then
+				car.nextrow = minrow2
+				car.nextcol = mincol2
+			elseif rndnum == 3 then
+				car.nextrow = minrow3
+				car.nextcol = mincol3
+			end
+		end
 	end
 end
 
-function car.updateMemory()
+local function updateMemory(mycar)
 	-- for each cell the car visits, record the distance
 	-- to the finish line from that cell.
 	-- this knowledge will be used in future races
 
+	if mycar.track[CURRENT_TRACK][mycar.row] == nil then
+		mycar.track[CURRENT_TRACK][mycar.row] = {}
+	end
+	mycar.track[CURRENT_TRACK][mycar.row][mycar.col] = cf.Findpath(TRACKS[CURRENT_TRACK], mycar.row, mycar.col, TRACKSDATA[CURRENT_TRACK].stoprow, TRACKSDATA[CURRENT_TRACK].stopcol)
 
-
+	print("---")
+	print(inspect(mycar.track[CURRENT_TRACK]))
 
 end
 
@@ -215,6 +223,7 @@ function car.update()
 
 			moveCar(thiscar)
 
+			updateMemory(thiscar)
 
 		end
 	end
