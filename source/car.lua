@@ -6,6 +6,7 @@ function car.create(tracknumber)
 	-- creates a car and places it on tracknumber
 
 	mycar = {}
+	mycar.index = #CARS + 1
 	mycar.row = TRACKSDATA[tracknumber].startrow
 	mycar.col = TRACKSDATA[tracknumber].startcol
 	mycar.facing = TRACKSDATA[tracknumber].initialfacing		-- numpad directions
@@ -14,6 +15,7 @@ function car.create(tracknumber)
 	mycar.acel	= 0
 	mycar.nextrow = nil
 	mycar.nextcol = nil
+	mycar.stepstaken = 0
 	mycar.rcolour = love.math.random(0,255)
 	mycar.gcolour = love.math.random(0,255)
 	mycar.bcolour = love.math.random(0,255)
@@ -21,11 +23,10 @@ function car.create(tracknumber)
 	mycar.explorerate = love.math.random(5,25)	-- explore vs exploit
 
 	mycar.track = {}	-- records what it knows about each track
+	mycar.track[CURRENT_TRACK] = {}
+	fun.loadMemory(mycar)
 
 	-- add the very first cell to it's memory
-	mycar.track[CURRENT_TRACK] = {}
-	mycar.track[CURRENT_TRACK][mycar.row] = {}
-	mycar.track[CURRENT_TRACK][mycar.row][mycar.col] = {}
 	mycar.track[CURRENT_TRACK][mycar.row][mycar.col] = cf.Findpath(TRACKS[CURRENT_TRACK], mycar.row, mycar.col, TRACKSDATA[CURRENT_TRACK].stoprow, TRACKSDATA[CURRENT_TRACK].stopcol)
 
 	table.insert(CARS, mycar)
@@ -56,9 +57,11 @@ function moveCar(car)
 
 	car.nextrow, car.nextcol = nil, nil
 
-print("car moved to " .. car.row, car.col)
-print("~~~~~~~~~~~~~~~~~~~")
+	-- print("car moved to " .. car.row, car.col)
+	-- print("~~~~~~~~~~~~~~~~~~~")
 	cf.sleep(1)
+
+	car.stepstaken = car.stepstaken + 1
 end
 
 local function getNeighbourCells(car, mytrack)
@@ -170,17 +173,18 @@ local function getNextCell(car)
 			car.track[CURRENT_TRACK][minrow1] = {}
 		end
 
-		if car.track[CURRENT_TRACK][minrow1][mincol1] ~= nil then
+		if car.track[CURRENT_TRACK][minrow1][mincol1] ~= nil and car.track[CURRENT_TRACK][minrow1][mincol1] < car.track[CURRENT_TRACK][car.row][car.col] then
 			car.nextrow = minrow1
 			car.nextcol = mincol1
-		elseif car.track[CURRENT_TRACK][minrow2][mincol2] ~= nil then
+		elseif car.track[CURRENT_TRACK][minrow2][mincol2] ~= nil and car.track[CURRENT_TRACK][minrow2][mincol2] < car.track[CURRENT_TRACK][car.row][car.col]  then
 			car.nextrow = minrow2
 			car.nextcol = mincol2
-		elseif car.track[CURRENT_TRACK][minrow3][mincol3] ~= nil then
+		elseif car.track[CURRENT_TRACK][minrow3][mincol3] ~= nil  and car.track[CURRENT_TRACK][minrow3][mincol3] < car.track[CURRENT_TRACK][car.row][car.col]  then
 			car.nextrow = minrow3
 			car.nextcol = mincol3
 		else
-			-- all values are nil. It knows nothing. Go random
+			-- all values are nil or it is at risk of moving backwards. It knows nothing. Go random
+			print("It knows nothing so exploring")
 			local rndnum = love.math.random(1,3)
 			if rndnum == 1 then
 				car.nextrow = minrow1
@@ -206,8 +210,7 @@ local function updateMemory(mycar)
 	end
 	mycar.track[CURRENT_TRACK][mycar.row][mycar.col] = cf.Findpath(TRACKS[CURRENT_TRACK], mycar.row, mycar.col, TRACKSDATA[CURRENT_TRACK].stoprow, TRACKSDATA[CURRENT_TRACK].stopcol)
 
-	print("---")
-	print(inspect(mycar.track[CURRENT_TRACK]))
+	fun.saveMemory(mycar)
 
 end
 
@@ -222,9 +225,13 @@ function car.update()
 			assert(thiscar.nextrow ~= nil and thiscar.nextcol ~= nil)
 
 			moveCar(thiscar)
-
 			updateMemory(thiscar)
 
+			if thiscar.row == TRACKSDATA[CURRENT_TRACK].stoprow and thiscar.col == TRACKSDATA[CURRENT_TRACK].stopcol then
+				-- finished
+				print("Steps taken = " .. thiscar.stepstaken)
+				error()
+			end
 		end
 	end
 
